@@ -82,3 +82,18 @@ Manual login → read-only collection → local validation/deduplication → bef
 - OFSS Arts and Commerce are stored separately in `udise.ofss_arts_admissions_2026_27` (1 row) and `udise.ofss_commerce_admissions_2026_27` (12 rows). Their source `reference_no` is unique and `identity_key` is the review composite of normalized applicant name, father name, and DOB. Exact composite matching currently confirms 0 rows; do not infer matches.
 - OFSS naming convention: batch `OFSS / 2026-2027 / Class XI`; future files should be named `OFSS_2026-2027_Class-XI_<STREAM>_<SOURCE>.<ext>`. Planned Storage folders are separated by stream.
 - Add repository `AGENTS.md`, `.ai/` state, ingestion code, migrations, tests, and CI after project requirements are agreed.
+
+## Complete data inventory
+
+GitHub stores project documentation and the data dictionary only. Student-level records, masked identifiers, and source workbooks remain outside GitHub in restricted Supabase/local source storage.
+
+| Dataset | Source | Supabase location | Rows | Current mapping |
+|---|---|---|---:|---|
+| UDISE active student list, 2026-27 | `10160203806_Students_Details 2026-27 (3).xlsx` | `udise.student_history` | 210 | 210 PENs; four classes |
+| OFSS Science, Class XI, 2026-2027 | `Admission_Register_9172026_020833AM.xls` | `udise.ofss_science_admissions_2026_27` | 67 | 41 matched; 26 unmatched |
+| OFSS Arts, Class XI, 2026-2027 | `Admission_Register_9172026_021112AM.xls` | `udise.ofss_arts_admissions_2026_27` | 1 | 0 exact composite matches |
+| OFSS Commerce, Class XI, 2026-2027 | `Admission_Register_9172026_021106AM.xls` | `udise.ofss_commerce_admissions_2026_27` | 12 | 0 exact composite matches |
+| Dropbox student export | Portal report, 2026-27 | `udise.dropbox_students` | 0 | Downloaded file was header-only |
+| Other portal history reports | Portal reports, 2026-27 | Not loaded as student rows | 0 data rows | Files were header-only at export time |
+
+The OFSS source key is `reference_no`. The review composite is `identity_key`, formed from normalized applicant name, father name, and DOB. A PEN/APAAR link is assigned only after an authorised, evidence-backed match.

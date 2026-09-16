@@ -1,10 +1,22 @@
 # UMV Tetahali Education Data Hub
 
-Private-data architecture and operational documentation for UMV Tetahali's school data workflows across **UDISE+**, **e-Shiksha Kosh**, **OFSS**, and district Dropbox datasets.
+Durable architecture and operational documentation for UMV Tetahali's school data workflows across **UDISE+**, **e-Shiksha Kosh**, **OFSS**, and Siwan district Dropbox data.
 
-> Student-level records, credentials, cookies, OTPs, session keys, and other sensitive school data must stay in restricted systems such as Supabase. GitHub should contain architecture, migrations, code, and documentation only.
+> **Important:** student-level records, credentials, cookies, OTPs, session keys, and other sensitive school data belong in restricted systems such as Supabase. GitHub should contain architecture, migrations, code, and non-sensitive documentation only.
 
-## Current database architecture
+## Source-of-truth rule
+
+For a new chat, machine, or operator, do **not** rely on conversation memory. Recover the project from this repository plus the live Supabase schema.
+
+Recommended recovery order:
+
+1. Read [`docs/current-state.md`](docs/current-state.md).
+2. Read [`docs/data-architecture.md`](docs/data-architecture.md).
+3. Read [`docs/import-workflow.md`](docs/import-workflow.md).
+4. Check the live Supabase project before making changes.
+5. Follow [`docs/new-chat-handoff.md`](docs/new-chat-handoff.md) for continuation rules.
+
+## Current Supabase architecture
 
 Supabase project: `umv-db`
 
@@ -28,73 +40,103 @@ umv-db
 │   ├── class_xi_arts         [view]
 │   └── class_xi_commerce     [view]
 │
-└── ofss
-    ├── science_2026_2028
-    ├── arts_2026_2028
-    └── commerce_2026_2028
+├── ofss
+│   ├── science_2026_2028
+│   ├── arts_2026_2028
+│   └── commerce_2026_2028
+│
+└── core
+    ├── stream_assignments
+    ├── snapshot_import_runs
+    ├── student_master         [view]
+    ├── ofss_students          [view]
+    ├── integration_status     [view]
+    └── latest_snapshot_imports[view]
 ```
 
-## Architecture principles
+## Current integration state
 
-### 1. Snapshot-first design
+Current operational counts at the documented checkpoint:
 
-Master source files are stored as dated/versioned snapshots rather than overwritten. Historical versions remain available for audit and comparison, while `is_current = true` identifies the current operational snapshot.
+- e-Shiksha Kosh current master: **220** students, version **1**.
+- UDISE current active-student master: **210** students, version **2**.
+- Class XI stream segregation: **78/78** classified.
+  - Science: **65**
+  - Arts: **12**
+  - Commerce: **1**
+- Automatic e-Shiksha ↔ UDISE safe links: **138**.
+- Automatic OFSS links visible in the core integration: **56**.
+- Remaining e-Shiksha students without a safe UDISE link are intentionally left unmatched rather than guessed.
 
-### 2. Derived class views
+These numbers are a checkpoint, not a permanent constant. Always verify live Supabase state before relying on them.
 
-Class-wise datasets are database views derived from the current master snapshot. They are not independent duplicate copies. Updating the current master snapshot automatically changes the class views.
+## Automatic master-snapshot imports
 
-### 3. e-Shiksha Kosh stream segregation
+Two database import functions are installed:
 
-Class XI currently has confirmed stream segregation:
+```text
+core.import_eshiksha_master_snapshot(...)
+core.import_udise_master_snapshot(...)
+```
 
-- Science: 65 students
-- Arts: 12 students
-- Commerce: 1 student
+They handle version assignment, duplicate removal within the incoming dataset, previous-current deactivation, new-current activation, and duplicate-import detection.
 
-The stable student identifier is `student_code`.
+The exact workflow and required input fields are documented in [`docs/import-workflow.md`](docs/import-workflow.md).
 
-The long-term design should preserve stream assignment independently from snapshot imports so that a future master CSV/XLSX without a stream column does not lose Science/Arts/Commerce classification. The intended model is a persistent `stream_assignments` table keyed by `student_code`, joined to the current master snapshot by the stream views.
+## Stream persistence
 
-See `docs/data-architecture.md` for the target import and duplicate-handling design.
+Class XI stream is stored independently in:
 
-### 4. Duplicate policy
+```text
+core.stream_assignments
+```
 
-A student may appear in multiple snapshot versions because each snapshot is historical. Within a single e-Shiksha Kosh version, `(version_no, student_code)` is unique, preventing accidental duplicate rows inside the same snapshot.
+The stream views join current e-Shiksha master rows to this persistent mapping by `student_code` and academic session. Therefore, a future e-Shiksha master file **does not need to contain a stream column** for already classified students.
 
-### 5. OFSS remains a separate source system
+## Source roles
 
-OFSS admission data is maintained separately from e-Shiksha Kosh and UDISE. Current session tables are `science_2026_2028`, `arts_2026_2028`, and `commerce_2026_2028`. Cross-system reconciliation should be explicit rather than silently merging records.
-
-### 6. UDISE Dropbox is a searchable historical source
-
-`udise.siwan_dropbox_master_snapshots` stores versioned Siwan district Dropbox reports. Future Dropbox files should be added as new dated snapshot versions, never overwrite previous snapshots.
+- **UDISE+** — active school enrolment/status source and historical snapshots.
+- **e-Shiksha Kosh** — state student master source, keyed primarily by `student_code`.
+- **OFSS** — Class XI admission and stream evidence for the 2026-2028 admission cycle.
+- **Siwan Dropbox** — searchable district reference/reconciliation source, not active-enrolment truth.
+- **core** — automatic linking and persistent cross-source metadata; not a replacement for source history.
 
 ## Sessions currently represented
 
 - UDISE / e-Shiksha Kosh: `2026-2027`
 - OFSS admission cycle: `2026-2028`
 
-Future sessions should be added without destroying prior-year history.
+Future sessions must retain previous history rather than overwrite it.
+
+## Planned data sources
+
+BSEB is intentionally postponed for now. When added later, the planned logical schema is:
+
+```text
+bseb
+├── registration_snapshots
+└── exam_snapshots
+```
+
+BSEB data should be versioned because registration/exam records may change after corrections. Registration number and BSEB unique/candidate identifiers should be retained as authoritative linking keys where available.
 
 ## Safety and workflow boundaries
 
 1. Login, password, CAPTCHA and OTP remain under human control.
 2. Read-only discovery, search, reconciliation and report generation may be automated.
 3. Consequential portal changes require validation and explicit operator approval.
-4. Credentials and private student records must never be committed to GitHub.
+4. Never commit real student records, credentials, session data, Aadhaar data, or private source files to GitHub.
 5. Supabase is the restricted operational data store; GitHub is the architecture/code/documentation layer.
 6. Production deployment must not occur without explicit approval.
+7. Do not silently fuzzy-match uncertain students. Ambiguous cases remain unmatched for review.
 
-## Documentation
+## Documentation index
 
-- [`docs/data-architecture.md`](docs/data-architecture.md) — canonical database architecture, snapshot/version rules, stream inheritance, and import behavior.
+- [`docs/current-state.md`](docs/current-state.md) — exact implementation checkpoint and live-object inventory.
+- [`docs/data-architecture.md`](docs/data-architecture.md) — canonical database architecture and design rules.
+- [`docs/import-workflow.md`](docs/import-workflow.md) — UDISE/e-Shiksha master import rules and database functions.
+- [`docs/new-chat-handoff.md`](docs/new-chat-handoff.md) — instructions for recovering and continuing the project in a new chat.
 
-## Current checkpoint
+## Repository administration note
 
-- UDISE current roster is versioned in `active_student_snapshots` with class views derived from the current snapshot.
-- Siwan Dropbox master snapshot is loaded and searchable as a versioned source dataset.
-- e-Shiksha Kosh master snapshot is maintained in `student_snapshots` with Class IX-XII views.
-- Class XI e-Shiksha Kosh stream segregation is complete: Science 65, Arts 12, Commerce 1.
-- OFSS 2026-2028 is separated into Science, Arts and Commerce source tables.
-- Cross-system reconciliation remains intentionally separate from source ingestion.
+The project name used in documentation is **UMV Tetahali Education Data Hub**. A more descriptive repository name than the historical `UDISE` name is recommended, such as `UMV-Tetahali-Data-Hub`. Repository visibility should be private before storing any additional non-public implementation material. No private student data should be committed even after making the repository private.

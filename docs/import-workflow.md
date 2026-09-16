@@ -2,7 +2,7 @@
 
 This document defines how new **e-Shiksha Kosh** and **UDISE** master snapshots are imported into Supabase.
 
-The goal is that the operator only supplies the new source file; versioning, duplicate control, current-snapshot switching, and downstream views are handled automatically.
+The preferred path is to use the database import functions so versioning, duplicate control, current-snapshot switching, and downstream views are handled automatically. Manual Supabase imports are also supported if the snapshot metadata rules below are followed.
 
 ---
 
@@ -165,7 +165,89 @@ The function:
 
 ---
 
-# 3. What updates automatically after import
+# 3. Manual Supabase import rule
+
+If a master snapshot is imported manually through the Supabase table/CSV import interface, every row in that file must carry consistent snapshot metadata.
+
+## UDISE manual import
+
+Every row in one manual UDISE snapshot should use the same:
+
+```text
+academic_year
+snapshot_date
+snapshot_version
+source_file
+is_current
+```
+
+Recommended filename convention:
+
+```text
+UDISE_Active_Students_2026-09-17.xlsx
+```
+
+The database should identify the newest UDISE snapshot by:
+
+```text
+academic_year + snapshot_date + snapshot_version
+```
+
+`is_current` is an operational flag, not the only evidence of which snapshot is newest.
+
+## e-Shiksha Kosh manual import
+
+Every row in one manual e-Shiksha snapshot should use the same:
+
+```text
+batch_label
+updated_as_of
+version_no
+source_file
+is_current
+```
+
+Recommended filename convention:
+
+```text
+eShikshaKosh_Master_2026-09-17.xlsx
+```
+
+The database should identify the newest e-Shiksha snapshot by:
+
+```text
+batch_label + updated_as_of + version_no
+```
+
+## Why both date and version are required
+
+The **date** makes the snapshot understandable to a human and allows chronological sorting. The **version** resolves cases where two different snapshots are imported on the same date.
+
+Example:
+
+```text
+2026-09-17 / version 2
+2026-09-17 / version 3   ← newer even though the date is the same
+```
+
+The filename date is useful for humans, but the database must rely on the actual date/version columns, not filename text alone.
+
+## Manual import safety
+
+Before marking a manually imported snapshot current:
+
+1. verify all rows share the same date/version/session;
+2. verify expected row count;
+3. verify duplicates within the file;
+4. mark the previous snapshot `is_current = false`;
+5. mark the new snapshot `is_current = true`;
+6. verify class views and `core.integration_status`.
+
+The preferred path remains the automatic import functions because they perform these steps transactionally.
+
+---
+
+# 4. What updates automatically after import
 
 After a successful master import, current-state views update because they read from `is_current = true` source rows.
 
@@ -198,7 +280,7 @@ The Class XI stream views preserve existing stream assignments through `core.str
 
 ---
 
-# 4. Operator workflow for a new uploaded file
+# 5. Operator workflow for a new uploaded file
 
 When a new e-Shiksha Kosh or UDISE XLSX/CSV is supplied:
 
@@ -217,11 +299,11 @@ When a new e-Shiksha Kosh or UDISE XLSX/CSV is supplied:
 12. update docs/current-state.md when the checkpoint materially changes
 ```
 
-Do not manually toggle `is_current` or manually choose the next version unless repairing a known database issue.
+Do not manually toggle `is_current` or manually choose the next version during a normal automated import.
 
 ---
 
-# 5. Validation after every import
+# 6. Validation after every import
 
 Minimum checks:
 
@@ -240,7 +322,7 @@ If a count unexpectedly drops, do not silently accept the import. Compare source
 
 ---
 
-# 6. Cross-source matching rule
+# 7. Cross-source matching rule
 
 Master import and cross-source reconciliation are separate concerns.
 
@@ -250,7 +332,7 @@ Never force a match solely because two names look similar. Ambiguous records sho
 
 ---
 
-# 7. Source-file safety
+# 8. Source-file safety
 
 Uploaded school files may contain private student data. They belong in the working environment/Supabase only.
 

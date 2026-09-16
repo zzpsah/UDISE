@@ -2,11 +2,58 @@
 
 This document defines how new **e-Shiksha Kosh** and **UDISE** master snapshots are imported into Supabase.
 
-The preferred path is to use the database import functions so versioning, duplicate control, current-snapshot switching, and downstream views are handled automatically. Manual Supabase imports are also supported if the snapshot metadata rules below are followed.
+The preferred path is to use the database import functions so versioning, duplicate control, current-snapshot switching, downstream views, and snapshot dating are handled automatically. Manual Supabase imports are also supported if the snapshot metadata rules below are followed.
 
 ---
 
-# 1. e-Shiksha Kosh master import
+# 1. Snapshot date rule
+
+The source XLSX/CSV filename does **not** determine the snapshot date.
+
+When a new master file is imported normally, Supabase automatically stamps the database system date at import time:
+
+```text
+current_date
+```
+
+The original filename is retained only as `source_file` for provenance.
+
+Therefore a file may have any filename. For example, all of these are acceptable:
+
+```text
+Student.xlsx
+latest.xlsx
+10160203806_Students_Details.xlsx
+any_other_name.csv
+```
+
+The database-generated snapshot date and sequential version identify when that dataset became a new master snapshot.
+
+For e-Shiksha Kosh the operational metadata is:
+
+```text
+updated_as_of   = system date by default
+version_no      = automatically incremented
+imported_at     = system timestamp
+is_current      = current-master flag
+source_file     = original filename only
+```
+
+For UDISE the operational metadata is:
+
+```text
+snapshot_date     = system date by default
+snapshot_version  = automatically incremented
+imported_at       = system timestamp
+is_current        = current-master flag
+source_file       = original filename only
+```
+
+If two different snapshots are imported on the same day, the version number determines their sequence.
+
+---
+
+# 2. e-Shiksha Kosh master import
 
 Database function:
 
@@ -14,10 +61,12 @@ Database function:
 core.import_eshiksha_master_snapshot(
   p_rows jsonb,
   p_source_file text,
-  p_updated_as_of date,
+  p_updated_as_of date default CURRENT_DATE,
   p_batch_label text default '2026-2027'
 )
 ```
+
+For normal imports, the caller does not need to supply a date. The database uses its current system date automatically.
 
 ## Required input
 
@@ -52,16 +101,17 @@ The source file does **not** need to contain `stream` for already classified Cla
 The function:
 
 1. validates that the payload is a non-empty array;
-2. validates `source_file` and `updated_as_of`;
-3. verifies every row has `student_code`;
-4. computes a payload hash;
-5. ignores the import if the exact payload was already imported successfully for that source/session;
-6. removes duplicate `student_code` values inside the incoming dataset, keeping the last occurrence;
-7. calculates the next `version_no` for the specified session;
-8. marks the previous current rows for that session `is_current = false`;
-9. inserts the new deduplicated rows with `is_current = true`;
-10. records the run in `core.snapshot_import_runs`;
-11. returns a JSON status result with version and row counts.
+2. validates `source_file`;
+3. assigns the database system date when no date is supplied;
+4. verifies every row has `student_code`;
+5. computes a payload hash;
+6. ignores the import if the exact payload was already imported successfully for that source/session;
+7. removes duplicate `student_code` values inside the incoming dataset, keeping the last occurrence;
+8. calculates the next `version_no` for the specified session;
+9. marks the previous current rows for that session `is_current = false`;
+10. inserts the new deduplicated rows with `is_current = true`;
+11. records the run in `core.snapshot_import_runs`;
+12. returns a JSON status result with version, snapshot date, and row counts.
 
 ## Duplicate rules
 
@@ -89,7 +139,7 @@ No new version should be created for the exact same payload.
 
 ---
 
-# 2. UDISE active-student master import
+# 3. UDISE active-student master import
 
 Database function:
 
@@ -97,12 +147,14 @@ Database function:
 core.import_udise_master_snapshot(
   p_rows jsonb,
   p_source_file text,
-  p_snapshot_date date,
+  p_snapshot_date date default CURRENT_DATE,
   p_school_udise_code text default '10160203806',
   p_academic_year text default '2026-2027',
   p_report_type text default 'ACTIVE_STUDENTS'
 )
 ```
+
+For normal imports, the caller does not need to supply a date. The database uses its current system date automatically.
 
 ## Required input
 
@@ -151,103 +203,89 @@ The fallback exists only for within-file deduplication when stable source identi
 
 The function:
 
-1. validates payload/source/date;
-2. validates every row has `class_name`;
-3. computes a payload hash;
-4. ignores exact repeated payload imports;
-5. deduplicates the incoming dataset by the UDISE dedupe key;
-6. calculates the next snapshot version for school + academic year;
-7. marks the prior current snapshot non-current;
-8. inserts the new snapshot as current;
-9. generates `data_hash` for each row;
-10. records the import in `core.snapshot_import_runs`;
-11. returns version and row counts.
+1. validates payload and source filename;
+2. assigns the database system date when no date is supplied;
+3. validates every row has `class_name`;
+4. computes a payload hash;
+5. ignores exact repeated payload imports;
+6. deduplicates the incoming dataset by the UDISE dedupe key;
+7. calculates the next snapshot version for school + academic year;
+8. marks the prior current snapshot non-current;
+9. inserts the new snapshot as current;
+10. generates `data_hash` for each row;
+11. records the import in `core.snapshot_import_runs`;
+12. returns version, snapshot date, and row counts.
 
 ---
 
-# 3. Manual Supabase import rule
+# 4. Manual Supabase import rule
 
-If a master snapshot is imported manually through the Supabase table/CSV import interface, every row in that file must carry consistent snapshot metadata.
+If a master snapshot is imported manually through the Supabase table/CSV interface instead of through the automatic import functions, Supabase's CSV importer cannot automatically calculate a shared snapshot version/date for the entire batch in the same transactional way.
+
+For a manual import, use the actual import date as the snapshot date and keep that value identical for every row in the file.
 
 ## UDISE manual import
 
-Every row in one manual UDISE snapshot should use the same:
+Every row in one manually imported UDISE snapshot should use the same:
 
 ```text
 academic_year
-snapshot_date
+snapshot_date     = date of manual import
 snapshot_version
 source_file
 is_current
 ```
 
-Recommended filename convention:
-
-```text
-UDISE_Active_Students_2026-09-17.xlsx
-```
-
-The database should identify the newest UDISE snapshot by:
-
-```text
-academic_year + snapshot_date + snapshot_version
-```
-
-`is_current` is an operational flag, not the only evidence of which snapshot is newest.
+The filename itself does not need a date and must not be parsed to determine which snapshot is latest.
 
 ## e-Shiksha Kosh manual import
 
-Every row in one manual e-Shiksha snapshot should use the same:
+Every row in one manually imported e-Shiksha snapshot should use the same:
 
 ```text
 batch_label
-updated_as_of
+updated_as_of     = date of manual import
 version_no
 source_file
 is_current
 ```
 
-Recommended filename convention:
+## How latest is determined
+
+The current operational master is:
 
 ```text
-eShikshaKosh_Master_2026-09-17.xlsx
+is_current = true
 ```
 
-The database should identify the newest e-Shiksha snapshot by:
-
-```text
-batch_label + updated_as_of + version_no
-```
-
-## Why both date and version are required
-
-The **date** makes the snapshot understandable to a human and allows chronological sorting. The **version** resolves cases where two different snapshots are imported on the same date.
+Snapshot ordering is determined primarily by the sequential version within the relevant session. Date is useful for audit and human understanding.
 
 Example:
 
 ```text
 2026-09-17 / version 2
-2026-09-17 / version 3   ← newer even though the date is the same
+2026-09-17 / version 3   ← newer
 ```
 
-The filename date is useful for humans, but the database must rely on the actual date/version columns, not filename text alone.
+The filename is provenance only.
 
 ## Manual import safety
 
 Before marking a manually imported snapshot current:
 
-1. verify all rows share the same date/version/session;
-2. verify expected row count;
-3. verify duplicates within the file;
-4. mark the previous snapshot `is_current = false`;
-5. mark the new snapshot `is_current = true`;
-6. verify class views and `core.integration_status`.
+1. use the actual system/import date consistently across all rows;
+2. assign the next snapshot version consistently across all rows;
+3. verify expected row count;
+4. verify duplicates within the file;
+5. mark the previous snapshot `is_current = false`;
+6. mark the new snapshot `is_current = true`;
+7. verify class views and `core.integration_status`.
 
 The preferred path remains the automatic import functions because they perform these steps transactionally.
 
 ---
 
-# 4. What updates automatically after import
+# 5. What updates automatically after import
 
 After a successful master import, current-state views update because they read from `is_current = true` source rows.
 
@@ -280,7 +318,7 @@ The Class XI stream views preserve existing stream assignments through `core.str
 
 ---
 
-# 5. Operator workflow for a new uploaded file
+# 6. Operator workflow for a new uploaded file
 
 When a new e-Shiksha Kosh or UDISE XLSX/CSV is supplied:
 
@@ -291,24 +329,26 @@ When a new e-Shiksha Kosh or UDISE XLSX/CSV is supplied:
 4. validate row count and required identifiers
 5. convert rows to JSON array
 6. call the appropriate core import function
-7. read the returned status/version/counts
-8. verify current master count
-9. verify class views
-10. verify core.integration_status
-11. verify Class XI stream counts if e-Shiksha was imported
-12. update docs/current-state.md when the checkpoint materially changes
+7. let the database stamp the current system date automatically
+8. read the returned status/version/counts
+9. verify current master count
+10. verify class views
+11. verify core.integration_status
+12. verify Class XI stream counts if e-Shiksha was imported
+13. update docs/current-state.md when the checkpoint materially changes
 ```
 
-Do not manually toggle `is_current` or manually choose the next version during a normal automated import.
+Do not derive snapshot date from the filename. Do not manually toggle `is_current` or manually choose the next version during a normal automated import.
 
 ---
 
-# 6. Validation after every import
+# 7. Validation after every import
 
 Minimum checks:
 
 ```text
 new snapshot version
+system-generated snapshot date
 current row count
 previous snapshot retained
 only intended session marked current
@@ -322,7 +362,7 @@ If a count unexpectedly drops, do not silently accept the import. Compare source
 
 ---
 
-# 7. Cross-source matching rule
+# 8. Cross-source matching rule
 
 Master import and cross-source reconciliation are separate concerns.
 
@@ -332,7 +372,7 @@ Never force a match solely because two names look similar. Ambiguous records sho
 
 ---
 
-# 8. Source-file safety
+# 9. Source-file safety
 
 Uploaded school files may contain private student data. They belong in the working environment/Supabase only.
 

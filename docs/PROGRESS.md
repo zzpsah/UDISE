@@ -19,6 +19,16 @@
 - Loaded the 210-row List of All Students export into `udise.student_history` in batches and verified 210 rows, four classes, and 210 distinct PENs.
 - Updated `udise.report_imports` to `active_student_list / 210 / IMPORTED`.
 
+## 2026-09-17 — OFSS Science admission mapping
+
+- Inspected `Admission_Register_9172026_020833AM.xls`; it contains 67 admission rows and 15 source columns.
+- Created restricted Supabase table `udise.ofss_science_admissions_2026_27` for OFSS Class XI Science admissions.
+- Loaded all 67 source rows with original values and a `raw_record` JSON copy.
+- Matched 41 records to `udise.student_history` using normalized applicant name plus father name.
+- The 41 matched rows include masked APAAR ID and APAAR status from the UDISE export. No unmasked APAAR values were available.
+- 26 rows remain `UNMATCHED`; no fuzzy or speculative assignments were made.
+- RLS is enabled with no public policies. No UDISE portal records were edited.
+
 ## Data policy
 
 - `student_history` is audit/reference data and may contain repeated snapshots; it is not the canonical update source.

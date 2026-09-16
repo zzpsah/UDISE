@@ -78,4 +78,5 @@ Manual login → read-only collection → local validation/deduplication → bef
 - Reconcile the loaded 210-row workbook against later source snapshots when populated history exports become available.
 - Define authorised Supabase operator policies.
 - Confirm official UDISE+ API eligibility.
+- Resolve 26 unmatched OFSS admissions using PEN, exact DOB, or another authorised identifier before assigning UDISE/APAAR values.
 - Add repository `AGENTS.md`, `.ai/` state, ingestion code, migrations, tests, and CI after project requirements are agreed.

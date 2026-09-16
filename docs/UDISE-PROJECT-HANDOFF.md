@@ -100,4 +100,4 @@ The OFSS source key is `reference_no`. The review composite is `identity_key`, f
 
 ## eShiksha Kosh source
 
-`udise.eshiksha_kosh_students` is the refreshable all-class eShiksha Kosh dataset. The first loaded snapshot is batch `2026-2027`, version `1`, updated as of `2026-09-17`, with 220 rows across Classes 9–12. Each future upload receives the next version number and an updated-as-of date; queries should filter `is_current = true`, batch, version, and class. Older versions remain available for audit and comparison. The source filename is retained in `source_file`.
+`eshiksha_kosh.student_snapshots` is the refreshable all-class eShiksha Kosh dataset in its own schema. The first loaded snapshot is batch `2026-2027`, version `1`, updated as of `2026-09-17`, with 220 rows across Classes 9–12. Each future upload receives the next version number and an updated-as-of date; queries should filter `is_current = true`, batch, version, and class. Older versions remain available for audit and comparison. The source filename is retained in `source_file`. Optional UDISE linkage fields support reviewed relationships without merging the domains.

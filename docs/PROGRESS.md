@@ -47,6 +47,14 @@
 - The table is designed for replacement by future versioned snapshots: keep prior versions for audit, mark only the newest approved version `is_current = true`, and query current data by batch/version/class.
 - RLS is enabled and no public policies were added. Raw student rows are not stored in GitHub.
 
+## 2026-09-17 — eShiksha Kosh separation and relationship
+
+- Moved the canonical eShiksha Kosh table out of the UDISE schema into the separate `eshiksha_kosh` schema.
+- Canonical table is now `eshiksha_kosh.student_snapshots`; it is not named as a UDISE table.
+- Added optional reviewed-link fields: `udise_pen`, `udise_student_history_id`, `udise_match_status`, and `udise_match_method`.
+- No UDISE relationship was auto-assigned during this move; the current 220 rows remain `UNMATCHED` until reconciliation is approved.
+- Future source naming/path convention: `EshikshaKosh_2026-2027_v<N>_<SOURCE>.<ext>` under `EshikshaKosh/2026-2027/`.
+
 ## 2026-09-17 — OFSS batch naming
 
 - OFSS is now treated as a separate batch namespace: `OFSS / 2026-2027 / Class XI`.

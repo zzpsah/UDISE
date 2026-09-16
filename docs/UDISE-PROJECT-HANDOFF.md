@@ -79,4 +79,5 @@ Manual login → read-only collection → local validation/deduplication → bef
 - Define authorised Supabase operator policies.
 - Confirm official UDISE+ API eligibility.
 - Resolve 26 unmatched OFSS admissions using PEN, exact DOB, or another authorised identifier before assigning UDISE/APAAR values.
+- OFSS Arts and Commerce are stored separately in `udise.ofss_arts_admissions_2026_27` (1 row) and `udise.ofss_commerce_admissions_2026_27` (12 rows). Their source `reference_no` is unique and `identity_key` is the review composite of normalized applicant name, father name, and DOB. Exact composite matching currently confirms 0 rows; do not infer matches.
 - Add repository `AGENTS.md`, `.ai/` state, ingestion code, migrations, tests, and CI after project requirements are agreed.

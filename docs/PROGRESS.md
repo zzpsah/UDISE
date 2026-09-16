@@ -29,6 +29,16 @@
 - 26 rows remain `UNMATCHED`; no fuzzy or speculative assignments were made.
 - RLS is enabled with no public policies. No UDISE portal records were edited.
 
+## 2026-09-17 — OFSS Arts and Commerce sources
+
+- Classified `Admission_Register_9172026_021112AM.xls` as Arts: 1 source row.
+- Classified `Admission_Register_9172026_021106AM.xls` as Commerce: 12 source rows.
+- Stored them separately in `udise.ofss_arts_admissions_2026_27` and `udise.ofss_commerce_admissions_2026_27`.
+- Each table preserves the OFSS `reference_no` as the source key and stores an `identity_key` made from normalized applicant name, father name, and DOB.
+- Exact composite reconciliation against the 2026-27 UDISE student export produced 0 confirmed matches in these two files; no PEN or APAAR assignment was made.
+- Added both datasets to `udise.dataset_catalog` as non-canonical, sensitive reference sources with independent duplicate handling.
+- RLS remains enabled and no UDISE portal records were changed.
+
 ## Data policy
 
 - `student_history` is audit/reference data and may contain repeated snapshots; it is not the canonical update source.

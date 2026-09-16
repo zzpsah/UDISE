@@ -39,6 +39,14 @@
 - Added both datasets to `udise.dataset_catalog` as non-canonical, sensitive reference sources with independent duplicate handling.
 - RLS remains enabled and no UDISE portal records were changed.
 
+## 2026-09-17 — eShiksha Kosh refreshable snapshot
+
+- Inspected `Student_1789591912.xlsx`, generated 17-Sep-2026 for UMV Tetahali.
+- The workbook contains 220 student rows across Classes 9, 10, 11, and 12, with student code, student name, father name, DOB, gender, category, roll number, school, and masked Aadhaar fields.
+- Loaded the current snapshot into `udise.eshiksha_kosh_students` with batch `2026-2027`, version `1`, and `updated_as_of = 2026-09-17`.
+- The table is designed for replacement by future versioned snapshots: keep prior versions for audit, mark only the newest approved version `is_current = true`, and query current data by batch/version/class.
+- RLS is enabled and no public policies were added. Raw student rows are not stored in GitHub.
+
 ## 2026-09-17 — OFSS batch naming
 
 - OFSS is now treated as a separate batch namespace: `OFSS / 2026-2027 / Class XI`.

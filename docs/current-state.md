@@ -104,9 +104,9 @@ Known source evidence at checkpoint:
 
 - `Student_1789597350.xlsx` — user-confirmed Class XI Science list — 65 students.
 - `Student_1789597416.xlsx` — corrected/user-confirmed Class XI Arts list — 12 students; cross-checked against OFSS Arts admission data.
-- Remaining Class XI student classified as Commerce: MOHAMMAD SHAD (`student_code` `202410161302252`).
+- The one remaining Class XI student was assigned to Commerce after Science and Arts were accounted for and verified in the live database.
 
-Do not store these real student details in additional GitHub files; this line exists only as a recovery note and should be removed if repository privacy/security policy requires stricter minimization.
+Do not put student names, student codes, Aadhaar details, or other identifiable student records into GitHub documentation.
 
 ## OFSS
 

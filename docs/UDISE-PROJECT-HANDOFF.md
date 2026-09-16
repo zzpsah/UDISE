@@ -62,7 +62,7 @@ Created restricted schema `udise`:
 - `dataset_catalog`: purpose and duplicate policy.
 - `class_ix`, `class_x`, `class_xi`, `class_xii`: class-filtered views.
 
-RLS is enabled and no public policies were added. Keep raw sensitive data restricted and do not expose this schema through the public API without an authorised access model. Planned Storage paths are `udise/2026-27/student-history/`, `udise/2026-27/dropbox/`, class folders, and `reports/`; the Storage bucket has not yet been created. The populated list export has not yet been inserted into `student_history`; the import register is marked partial.
+RLS is enabled and no public policies were added. Keep raw sensitive data restricted and do not expose this schema through the public API without an authorised access model. Planned Storage paths are `udise/2026-27/student-history/`, `udise/2026-27/dropbox/`, class folders, and `reports/`; the Storage bucket has not yet been created. The populated List of All Students export has been inserted into `student_history`: 210 rows, four classes, and 210 distinct PENs for 2026-27. The import register is marked imported. Dropbox and other history reports remain empty because their downloaded files contained headers only.
 
 ## Notebook assessment
 
@@ -75,7 +75,7 @@ Manual login → read-only collection → local validation/deduplication → bef
 ## Open items
 
 - Create and secure the private Supabase Storage bucket/folders.
-- Map the 210-row workbook into the schema after column review.
+- Reconcile the loaded 210-row workbook against later source snapshots when populated history exports become available.
 - Define authorised Supabase operator policies.
 - Confirm official UDISE+ API eligibility.
 - Add repository `AGENTS.md`, `.ai/` state, ingestion code, migrations, tests, and CI after project requirements are agreed.

@@ -39,6 +39,15 @@
 - Added both datasets to `udise.dataset_catalog` as non-canonical, sensitive reference sources with independent duplicate handling.
 - RLS remains enabled and no UDISE portal records were changed.
 
+## 2026-09-17 — OFSS batch naming
+
+- OFSS is now treated as a separate batch namespace: `OFSS / 2026-2027 / Class XI`.
+- Science, Arts, and Commerce remain separate datasets within that batch.
+- Added `batch_label = 2026-2027` to all three OFSS tables and documented each table accordingly.
+- Original uploaded filenames remain preserved in `source_file` for traceability.
+- Future files should use the naming pattern `OFSS_2026-2027_Class-XI_<STREAM>_<SOURCE>.<ext>`.
+- Planned Storage paths are `OFSS/2026-2027/Class-XI/Science/`, `Arts/`, and `Commerce/`; Storage tooling was not available in this session.
+
 ## Data policy
 
 - `student_history` is audit/reference data and may contain repeated snapshots; it is not the canonical update source.

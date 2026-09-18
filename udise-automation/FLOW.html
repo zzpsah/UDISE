@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>UDISE+ GP Blood Group Fill Flow</title>
+<style>
+  :root {
+    --fg: var(--foreground);
+    --muted: var(--muted-foreground);
+    --accent: var(--accent);
+    --border: var(--border);
+    --card: var(--card);
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--fg);
+    margin: 0;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  h1 { font-size: 18px; margin: 0; font-weight: 600; }
+  .subtitle { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .diagram {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--card);
+  }
+  .node {
+    display: flex;
+    align-items: stretch;
+    min-height: 44px;
+  }
+  .node.start { justify-content: center; }
+  .node.decision { justify-content: center; }
+  .node.action { justify-content: flex-end; padding-right: 16px; }
+  .node.close-modal { justify-content: flex-end; padding-right: 16px; }
+  .node.done { justify-content: center; }
+  .box {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.4;
+    background: var(--card);
+    min-width: 180px;
+    flex: 1;
+  }
+  .box.decision-box {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, var(--card));
+  }
+  .box.start-box { border-color: var(--accent); font-weight: 600; }
+  .box.done-box { border-color: var(--accent); color: var(--accent); }
+  .arrow-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2px 0;
+    position: relative;
+  }
+  .arrow {
+    width: 2px;
+    height: 18px;
+    background: var(--muted);
+    margin: 0 auto;
+  }
+  .arrow-label {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+    background: var(--card);
+    padding: 0 4px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+  }
+  .branch {
+    display: flex;
+    gap: 0;
+    flex-direction: row;
+    position: relative;
+  }
+  .branch .arrow-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .legend span { display: flex; align-items: center; gap: 4px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .dot.action { background: var(--accent); }
+  .dot.decision { background: var(--accent); opacity: 0.35; }
+  .dot.flow { background: var(--muted); }
+</style>
+</head>
+<body>
+  <h1>UDISE+ General Profile — Blood Group Fill Flow</h1>
+  <div class="subtitle">UMV Tetahali · PEN 10160203806 · AY 2026-27 · Class IX → X → XI → XII · Tool: computer_use (Chrome SOM)</div>
+
+  <div class="diagram">
+
+    <!-- START -->
+    <div class="node start">
+      <div class="box start-box">▶ START — Open student's General Profile</div>
+    </div>
+    <div class="arrow-col"><div class="arrow"></div></div>
+
+    <!-- RECONSTRUCT SELECTORS -->
+    <div class="node action">
+      <div class="box">Re-run SOM/vision capture &amp; identify Blood Group dropdown + Save + modal Close</div>
+    </div>
+    <div class="arrow-col"><div class="arrow"></div></div>
+
+    <!-- DECISION: BG empty? -->
+    <div class="node decision">
+      <div class="box decision-box">Blood Group already &quot;Under Investigation&quot;?</div>
+    </div>
+
+    <div class="branch">
+      <!-- YES branch -->
+      <div class="arrow-col">
+        <div class="arrow"></div>
+        <div class="arrow-label">YES — already set</div>
+        <div class="arrow"></div>
+        <div class="node action">
+          <div class="box">Click <strong>Save</strong></div>
+        </div>
+        <div class="arrow-col"><div class="arrow"></div></div>
+        <div class="node action">
+          <div class="box">Confirm modal &quot;General data updated successfully&quot;</div>
+        </div>
+        <div class="arrow-col"><div class="arrow"></div></div>
+        <div class="node close-modal">
+          <div class="box">Click modal <strong>Close</strong></div>
+        </div>
+      </div>
+
+      <!-- NO branch -->
+      <div class="arrow-col">
+        <div class="arrow"></div>
+        <div class="arrow-label">NO — empty or other</div>
+        <div class="arrow"></div>
+        <div class="node action">
+          <div class="box">Click Blood Group dropdown (#4.20)</div>
+        </div>
+        <div class="arrow-col"><div class="arrow"></div></div>
+        <div class="node action">
+          <div class="box">Select &quot;Under Investigation - Result will be updated soon&quot;</div>
+        </div>
+        <div class="arrow-col"><div class="arrow"></div></div>
+        <div class="node action">
+          <div class="box">Click <strong>Save</strong></div>
+        </div>
+        <div class="arrow-col"><div class="arrow"></div></div>
+        <div class="node action">
+          <div class="box">Confirm modal &quot;General data updated successfully&quot;</div>
+        </div>
+        <div class="arrow-col"><div class="arrow"></div></div>
+        <div class="node close-modal">
+          <div class="box">Click modal <strong>Close</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- unify -->
+    <div class="arrow-col"><div class="arrow"></div></div>
+
+    <!-- LOG -->
+    <div class="node action">
+      <div class="box">Log: student_key, PEN, name, class, action=BloodGroup|UnderInvestigation, result=Saved</div>
+    </div>
+    <div class="arrow-col"><div class="arrow"></div></div>
+
+    <!-- DONE -->
+    <div class="node done">
+      <div class="box done-box">✓ DONE — move to next student</div>
+    </div>
+
+  </div>
+
+  <div class="legend">
+    <span><span class="dot action"></span> Action step</span>
+    <span><span class="dot decision"></span> Decision</span>
+    <span><span class="dot flow"></span> Flow</span>
+    <span style="margin-left:auto">Confirmation modal always appears after Save — Close it before next action</span>
+  </div>
+
+</body>
+</html>
